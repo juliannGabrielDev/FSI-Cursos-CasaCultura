@@ -183,6 +183,7 @@ public class FAsignaciones extends javax.swing.JFrame {
         BEliminar.addActionListener(this::BEliminarActionPerformed);
         Toolbar.add(BEliminar);
 
+        jLabel4.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
         jLabel4.setText("REPORTE DEL DÍA:");
         Toolbar.add(jLabel4);
         Toolbar.add(DCFechaAsignaciones);
