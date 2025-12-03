@@ -2,6 +2,8 @@
 import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -24,42 +26,48 @@ public class FAsignaciones extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         setTitle("Gestión de Asignaciones");
 
-        cargarCombos();
         cargarDatos();
         generarGrafica();
+
+        DefaultTableModel model = (DefaultTableModel) TAsignaciones.getModel();
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        TAsignaciones.setRowSorter(sorter);
+        
+        DefaultTableModel model2 = (DefaultTableModel) TTalleres.getModel();
+        TableRowSorter<DefaultTableModel> sorter2 = new TableRowSorter<>(model2);
+        TTalleres.setRowSorter(sorter2);
     }
 
-    private void cargarDatos() {
-        String consulta = "SELECT a.id_asignacion, c.nombre_curso AS Curso, i.nombre_completo AS Instructor, "
-                + "a.horario_especifico AS Horario, a.aula AS Aula, a.modalidad AS Modalidad "
-                + "FROM asignaciones a "
-                + "INNER JOIN cursos c ON a.id_curso = c.id_curso "
-                + "INNER JOIN instructores i ON a.id_instructor = i.id_instructor "
-                + "ORDER BY a.id_asignacion DESC";
-
-        cnx.entablar(consulta, TConsultas);
-    }
-
-    private void cargarCombos() {
-        cnx.seleccionar("SELECT nombre_completo FROM instructores ORDER BY nombre_completo", CBInstructor);
-        cnx.seleccionar("SELECT nombre_curso FROM cursos ORDER BY nombre_curso", CBCurso);
-    }
-
-    private void limpiarCampos() {
-        if (CBInstructor.getItemCount() > 0) {
-            CBInstructor.setSelectedIndex(0);
+    public void cargarDatos() {
+        // CARGAR TALLERES
+        String busqTaller = TBuscarTaller.getText().trim();
+        String ordTaller = "nombre_taller";
+        
+        if (CBOrdenTalleres.getSelectedItem() != null) {
+            ordTaller = CBOrdenTalleres.getSelectedItem().toString();
         }
-        if (CBCurso.getItemCount() > 0) {
-            CBCurso.setSelectedIndex(0);
+
+        cnx.entablar("CALL obtener_talleres('" + busqTaller + "', '" + ordTaller + "', 'ASC')", TTalleres);
+
+        // CARGAR ASIGNACIONES
+        String busqAsig = TBuscarAsig.getText().trim();
+        String ordAsig = "Taller";
+        String direccion = "ASC";
+
+        if (CBOrdenAsignaciones.getSelectedItem() != null) {
+            ordAsig = CBOrdenAsignaciones.getSelectedItem().toString();
         }
-        THorario.setText("");
-        CBAula.setSelectedIndex(0);
-        CBModalidad.setSelectedIndex(0);
-        CBInstructor.requestFocus();
+        
+        if (CBDireccion.getSelectedItem() != null) {
+            direccion = CBDireccion.getSelectedItem().toString();
+        }
+
+        // CALL obtener_asignaciones(busqueda, orden, direccion)
+        cnx.entablar("CALL obtener_asignaciones('" + busqAsig + "', '" + ordAsig + "', '"+ direccion +"')", TAsignaciones);
     }
 
-    private void generarGrafica() {
-        String query = "SELECT modalidad, COUNT(id_asignacion) FROM asignaciones GROUP BY modalidad";
+    public void generarGrafica() {
+        String query = "CALL contar_asignaciones_por_modalidad()";
 
         ArrayList<String> series = new ArrayList<>();
         series.add("Total");
@@ -84,12 +92,12 @@ public class FAsignaciones extends javax.swing.JFrame {
         );
     }
 
-    private String obtenerIdCurso(String nombre) {
-        // Busca el ID del curso usando su nombre
+    private String obtenerIdTaller(String nombre) {
+        // Busca el ID del Taller usando su nombre
         return cnx.buscarDato(
-                "cursos",
-                "id_curso",
-                "nombre_curso",
+                "talleres",
+                "id_taller",
+                "nombre_taller",
                 nombre
         );
     }
@@ -106,26 +114,24 @@ public class FAsignaciones extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        TConsultas = new javax.swing.JTable();
-        jPanel3 = new javax.swing.JPanel();
-        jLabel8 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
-        CBInstructor = new javax.swing.JComboBox<>();
-        CBCurso = new javax.swing.JComboBox<>();
-        THorario = new javax.swing.JTextField();
-        CBModalidad = new javax.swing.JComboBox<>();
-        CBAula = new javax.swing.JComboBox<>();
+        TTalleres = new javax.swing.JTable();
         Toolbar = new javax.swing.JToolBar();
-        BNuevo = new javax.swing.JButton();
-        BAgregar = new javax.swing.JButton();
         BActualizar = new javax.swing.JButton();
         BEliminar = new javax.swing.JButton();
         BPDF = new javax.swing.JButton();
         BGrafica = new javax.swing.JButton();
         PFondo = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        TAsignaciones = new javax.swing.JTable();
+        TBuscarTaller = new javax.swing.JTextField();
+        TBuscarAsig = new javax.swing.JTextField();
+        CBOrdenAsignaciones = new javax.swing.JComboBox<>();
+        CBOrdenTalleres = new javax.swing.JComboBox<>();
+        BTodos = new javax.swing.JButton();
+        BAsignados = new javax.swing.JButton();
+        CBDireccion = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -136,7 +142,7 @@ public class FAsignaciones extends javax.swing.JFrame {
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("ASIGNACIONES");
 
-        TConsultas.setModel(new javax.swing.table.DefaultTableModel(
+        TTalleres.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -147,102 +153,17 @@ public class FAsignaciones extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        TConsultas.addMouseListener(new java.awt.event.MouseAdapter() {
+        TTalleres.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
-                TConsultasMousePressed(evt);
+                TTalleresMousePressed(evt);
             }
         });
-        jScrollPane1.setViewportView(TConsultas);
+        jScrollPane1.setViewportView(TTalleres);
 
-        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Asignar Curso a un Instructor:"));
-
-        jLabel8.setText("Instructor:");
-
-        jLabel9.setText("Curso:");
-
-        jLabel10.setText("Horario de Sesión:");
-
-        jLabel11.setText("Aula:");
-
-        jLabel12.setText("Modalidad:");
-
-        CBInstructor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
-        CBCurso.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
-        CBModalidad.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Presencial", "Virtual", "Híbrida" }));
-
-        CBAula.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Aula 1", "Aula 2", "Aula 3", "Aula 4", "Aula 5" }));
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel8)
-                        .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(CBInstructor, 0, 263, Short.MAX_VALUE)
-                        .addComponent(CBCurso, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(THorario, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(27, 27, 27)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE))
-                    .addComponent(CBAula, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(CBModalidad, javax.swing.GroupLayout.PREFERRED_SIZE, 194, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel8)
-                    .addComponent(jLabel11))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(CBInstructor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(CBAula, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel9)
-                    .addComponent(jLabel12))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(CBCurso, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(CBModalidad, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(jLabel10)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(THorario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        Toolbar.setBackground(new java.awt.Color(0, 102, 255));
+        Toolbar.setBackground(new java.awt.Color(255, 214, 0));
         Toolbar.setRollover(true);
 
-        BNuevo.setText("NUEVO");
-        BNuevo.setFocusable(false);
-        BNuevo.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        BNuevo.setOpaque(true);
-        BNuevo.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        BNuevo.addActionListener(this::BNuevoActionPerformed);
-        Toolbar.add(BNuevo);
-
-        BAgregar.setText("AGREGAR");
-        BAgregar.setFocusable(false);
-        BAgregar.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        BAgregar.setOpaque(true);
-        BAgregar.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        BAgregar.addActionListener(this::BAgregarActionPerformed);
-        Toolbar.add(BAgregar);
-
+        BActualizar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/actualizar.png"))); // NOI18N
         BActualizar.setText("ACTUALIZAR");
         BActualizar.setFocusable(false);
         BActualizar.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -251,6 +172,7 @@ public class FAsignaciones extends javax.swing.JFrame {
         BActualizar.addActionListener(this::BActualizarActionPerformed);
         Toolbar.add(BActualizar);
 
+        BEliminar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/eliminar.png"))); // NOI18N
         BEliminar.setText("ELIMINAR");
         BEliminar.setFocusable(false);
         BEliminar.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -259,6 +181,7 @@ public class FAsignaciones extends javax.swing.JFrame {
         BEliminar.addActionListener(this::BEliminarActionPerformed);
         Toolbar.add(BEliminar);
 
+        BPDF.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/pdf.png"))); // NOI18N
         BPDF.setText("PDF");
         BPDF.setFocusable(false);
         BPDF.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -267,6 +190,7 @@ public class FAsignaciones extends javax.swing.JFrame {
         BPDF.addActionListener(this::BPDFActionPerformed);
         Toolbar.add(BPDF);
 
+        BGrafica.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/barra-grafica.png"))); // NOI18N
         BGrafica.setText("GRÁFICA");
         BGrafica.setFocusable(false);
         BGrafica.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -277,136 +201,237 @@ public class FAsignaciones extends javax.swing.JFrame {
 
         PFondo.setLayout(new java.awt.GridLayout(1, 1));
 
+        jLabel2.setText("Asignaciones:");
+
+        jLabel3.setText("Talleres:");
+
+        TAsignaciones.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane2.setViewportView(TAsignaciones);
+
+        TBuscarTaller.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                TBuscarTallerKeyReleased(evt);
+            }
+        });
+
+        TBuscarAsig.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                TBuscarAsigKeyReleased(evt);
+            }
+        });
+
+        CBOrdenAsignaciones.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Taller", "Instructor", "Horario", "Aula", "Modalidad" }));
+        CBOrdenAsignaciones.addItemListener(this::CBOrdenAsignacionesItemStateChanged);
+
+        CBOrdenTalleres.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "nombre_taller", "costo_semestral", "nivel" }));
+        CBOrdenTalleres.addItemListener(this::CBOrdenTalleresItemStateChanged);
+
+        BTodos.setBackground(new java.awt.Color(255, 214, 0));
+        BTodos.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BTodos.setText("TODOS");
+        BTodos.setFocusable(false);
+        BTodos.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        BTodos.setOpaque(true);
+        BTodos.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        BTodos.addActionListener(this::BTodosActionPerformed);
+
+        BAsignados.setBackground(new java.awt.Color(255, 214, 0));
+        BAsignados.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BAsignados.setForeground(new java.awt.Color(51, 51, 51));
+        BAsignados.setText("POR MODALIDAD");
+        BAsignados.setFocusable(false);
+        BAsignados.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        BAsignados.setOpaque(true);
+        BAsignados.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        BAsignados.addActionListener(this::BAsignadosActionPerformed);
+
+        CBDireccion.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "ASC", "DESC" }));
+        CBDireccion.addItemListener(this::CBDireccionItemStateChanged);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1070, Short.MAX_VALUE)
+            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(Toolbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2)
                     .addComponent(jScrollPane1)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 508, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 105, Short.MAX_VALUE)
+                        .addComponent(CBOrdenTalleres, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(TBuscarTaller, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(BTodos, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(BAsignados)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(88, 88, 88)
+                                .addComponent(CBOrdenAsignaciones, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(CBDireccion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(TBuscarAsig, javax.swing.GroupLayout.PREFERRED_SIZE, 205, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(PFondo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(PFondo, javax.swing.GroupLayout.PREFERRED_SIZE, 634, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(16, 16, 16))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(Toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(Toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(CBOrdenTalleres, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(TBuscarTaller, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(BTodos, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(BAsignados, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(CBOrdenAsignaciones, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(TBuscarAsig, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2)
+                            .addComponent(CBDireccion, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(PFondo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addGap(16, 16, 16))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void BNuevoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BNuevoActionPerformed
-        limpiarCampos();
-    }//GEN-LAST:event_BNuevoActionPerformed
-
-    private void BAgregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BAgregarActionPerformed
-        String nomInstructor = CBInstructor.getSelectedItem().toString();
-        String nomCurso = CBCurso.getSelectedItem().toString();
-
-        // Obtener los IDs
-        String idInstructor = obtenerIdInstructor(nomInstructor);
-        String idCurso = obtenerIdCurso(nomCurso);
-
-        String horario = THorario.getText();
-        String aula = CBAula.getSelectedItem().toString();
-        String modalidad = CBModalidad.getSelectedItem().toString();
-
-        String[] datos = {
-            "",
-            idCurso,
-            idInstructor,
-            THorario.getText(),
-            CBAula.getSelectedItem().toString(),
-            CBModalidad.getSelectedItem().toString()
-        };
-
-        if (cnx.insertar(tabla, datos) == 1) {
-            JOptionPane.showMessageDialog(this, "Asignación agregada con éxito.");
-            cargarDatos();
-            limpiarCampos();
-            generarGrafica();
-        } else {
-            JOptionPane.showMessageDialog(this, "Error al guardar.");
-        }
-    }//GEN-LAST:event_BAgregarActionPerformed
-
     private void BActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BActualizarActionPerformed
-        int fila = TConsultas.getSelectedRow();
+//        int fila = TTalleres.getSelectedRow();
+//        if (fila == -1) {
+//            JOptionPane.showMessageDialog(this, "Selecciona una asignación para editar.");
+//            return;
+//        }
+//
+//        String idAsignacion = objToString(TTalleres.getValueAt(fila, 0));
+//
+//        String nomInstructor = CBInstructor.getSelectedItem().toString();
+//        String nomCurso = CBCurso.getSelectedItem().toString();
+//
+//        // Obtener los IDs
+//        String idInstructor = obtenerIdInstructor(nomInstructor);
+//        String idCurso = obtenerIdCurso(nomCurso);
+//
+//        String[] datos = {
+//            idAsignacion,
+//            idCurso,
+//            idInstructor,
+//            THorario.getText(),
+//            CBAula.getSelectedItem().toString(),
+//            CBModalidad.getSelectedItem().toString()
+//        };
+//
+//        if (cnx.actualizar(tabla, datos) == 1) {
+//            JOptionPane.showMessageDialog(this, "Asignación actualizada.");
+//            cargarDatos();
+//            limpiarCampos();
+//            generarGrafica();
+//        } else {
+//            JOptionPane.showMessageDialog(this, "Error al actualizar.");
+//        }
+        // 1. Validar selección en la tabla de ASIGNACIONES (Abajo)
+        int fila = TAsignaciones.getSelectedRow();
+
         if (fila == -1) {
-            JOptionPane.showMessageDialog(this, "Selecciona una asignación para editar.");
+            JOptionPane.showMessageDialog(this, "Selecciona una asignación de la tabla inferior para editar.");
             return;
         }
 
-        String idAsignacion = objToString(TConsultas.getValueAt(fila, 0));
+        // 2. Obtener el ID de la asignación seleccionada
+        String idAsig = TAsignaciones.getValueAt(fila, 0).toString();
 
-        String nomInstructor = CBInstructor.getSelectedItem().toString();
-        String nomCurso = CBCurso.getSelectedItem().toString();
+        // 3. Obtener los datos originales (IDs reales) desde la BD
+        // La tabla visual muestra nombres, pero para editar necesitamos los IDs (id_taller, id_instructor)
+        String q = "SELECT id_taller, id_instructor, horario_especifico, aula, modalidad "
+                + "FROM asignaciones WHERE id_asignacion = " + idAsig;
 
-        // Obtener los IDs
-        String idInstructor = obtenerIdInstructor(nomInstructor);
-        String idCurso = obtenerIdCurso(nomCurso);
+        ArrayList<ArrayList<String>> res = cnx.consultar(q);
 
-        String[] datos = {
-            idAsignacion,
-            idCurso,
-            idInstructor,
-            THorario.getText(),
-            CBAula.getSelectedItem().toString(),
-            CBModalidad.getSelectedItem().toString()
-        };
+        if (res != null && !res.isEmpty()) {
+            // Extraemos la primera fila de resultados
+            ArrayList<String> r = res.get(0);
 
-        if (cnx.actualizar(tabla, datos) == 1) {
-            JOptionPane.showMessageDialog(this, "Asignación actualizada.");
+            // r contiene: [0]=id_taller, [1]=id_instructor, [2]=horario, [3]=aula, [4]=modalidad
+            // 4. Abrir el diálogo en modo edición
+            DAsignar ventana = new DAsignar(this, true, cnx);
+
+            // Pasamos los datos recuperados
+            ventana.cargarDatosEdicion(idAsig, r.get(0), r.get(1), r.get(2), r.get(3), r.get(4));
+
+            ventana.setVisible(true);
+
+            // 5. Recargar la tabla al cerrar la ventana para ver los cambios
             cargarDatos();
-            limpiarCampos();
-            generarGrafica();
         } else {
-            JOptionPane.showMessageDialog(this, "Error al actualizar.");
+            JOptionPane.showMessageDialog(this, "No se pudieron recuperar los datos originales.");
         }
     }//GEN-LAST:event_BActualizarActionPerformed
 
     private void BEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BEliminarActionPerformed
-        int fila = TConsultas.getSelectedRow();
+        int fila = TAsignaciones.getSelectedRow();
         if (fila == -1) {
             JOptionPane.showMessageDialog(this, "Selecciona una fila para eliminar.");
             return;
         }
 
         if (JOptionPane.showConfirmDialog(this, "¿Eliminar asignación?", "Confirmar", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            String idAsignacion = objToString(TConsultas.getValueAt(fila, 0));
+            String idAsignacion = objToString(TAsignaciones.getValueAt(fila, 0));
             String[] datos = {idAsignacion};
 
             if (cnx.borrar(tabla, datos) == 1) {
                 JOptionPane.showMessageDialog(this, "Eliminado correctamente.");
                 cargarDatos();
-                limpiarCampos();
+                //limpiarCampos();
                 generarGrafica();
             } else {
                 JOptionPane.showMessageDialog(this, "Error al eliminar.");
@@ -415,17 +440,32 @@ public class FAsignaciones extends javax.swing.JFrame {
     }//GEN-LAST:event_BEliminarActionPerformed
 
     private void BPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BPDFActionPerformed
-        String consulta = "SELECT i.nombre_completo AS Instructor, c.nombre_curso AS Curso, "
-                + "a.horario_especifico AS Horario, a.aula AS Aula, a.modalidad AS Modalidad "
-                + "FROM asignaciones a "
-                + "JOIN cursos c ON a.id_curso = c.id_curso "
-                + "JOIN instructores i ON a.id_instructor = i.id_instructor "
-                + "ORDER BY i.nombre_completo";
+        // String consulta = "CALL obtener_instructores_con_talleres()";
 
-        float[] anchos = {3f, 3f, 2f, 1.5f, 1.5f}; // Ajuste de anchos para 5 columnas
+        int fila = TAsignaciones.getSelectedRow();
 
-        if (cnx.crearPDF("Casa de la Cultura", "Reporte de Asignaciones", consulta, anchos, "ReporteAsignaciones") == 1) {
-            cnx.visualizarPDF("ReporteAsignaciones");
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Selecciona una asignación de la tabla inferior para generar su comprobante.");
+            return;
+        }
+
+        String idAsignacion = TAsignaciones.getValueAt(fila, 0).toString();
+
+        String query = "SELECT Taller, Instructor, Horario, Aula, Modalidad "
+                + "FROM vista_asignaciones_detalle "
+                + "WHERE id_asignacion = " + idAsignacion;
+
+        float[] anchos = {3f, 3f, 2f, 1.5f, 1.5f};
+        String titulo = "Comprobante de Asignación #" + idAsignacion;
+        String nombreArchivo = "Comprobante_Asig_" + idAsignacion;
+
+        // 4. Generar
+        int estado = cnx.crearPDF("Casa de la Cultura", titulo, query, anchos, nombreArchivo);
+
+        if (estado == 1) {
+            cnx.visualizarPDF(nombreArchivo);
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al generar el comprobante.");
         }
     }//GEN-LAST:event_BPDFActionPerformed
 
@@ -433,23 +473,54 @@ public class FAsignaciones extends javax.swing.JFrame {
         generarGrafica();
     }//GEN-LAST:event_BGraficaActionPerformed
 
-    private void TConsultasMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_TConsultasMousePressed
-        int fila = TConsultas.getSelectedRow();
+    private void TTalleresMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_TTalleresMousePressed
+        if (evt.getClickCount() == 2) {
+            int fila = TTalleres.getSelectedRow();
 
-        if (fila >= 0) {
-            String nombreCurso = objToString(TConsultas.getValueAt(fila, 1));
-            String nombreInstructor = objToString(TConsultas.getValueAt(fila, 2));
-            String horario = objToString(TConsultas.getValueAt(fila, 3));
-            String aula = objToString(TConsultas.getValueAt(fila, 4));
-            String modalidad = objToString(TConsultas.getValueAt(fila, 5));
+            if (fila != -1) {
+                // 'this' es la ventana padre (FAsignaciones)
+                // 'true' hace que la ventana sea modal (bloquea la de atrás)
+                // 'cnx' es tu objeto de conexión que ya tienes en FAsignaciones
+                DAsignar ventana = new DAsignar(this, true, cnx);
 
-            CBCurso.setSelectedItem(nombreCurso);
-            CBInstructor.setSelectedItem(nombreInstructor);
-            THorario.setText(horario);
-            CBAula.setSelectedItem(aula);
-            CBModalidad.setSelectedItem(modalidad);
+                String id = TTalleres.getValueAt(fila, 0).toString();
+                ventana.setIdTaller(id);
+
+                ventana.setVisible(true);
+                cargarDatos();
+            }
         }
-    }//GEN-LAST:event_TConsultasMousePressed
+    }//GEN-LAST:event_TTalleresMousePressed
+
+    private void CBOrdenAsignacionesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_CBOrdenAsignacionesItemStateChanged
+        cargarDatos();
+    }//GEN-LAST:event_CBOrdenAsignacionesItemStateChanged
+
+    private void CBOrdenTalleresItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_CBOrdenTalleresItemStateChanged
+        cargarDatos();
+    }//GEN-LAST:event_CBOrdenTalleresItemStateChanged
+
+    private void TBuscarAsigKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TBuscarAsigKeyReleased
+        cargarDatos();
+    }//GEN-LAST:event_TBuscarAsigKeyReleased
+
+    private void TBuscarTallerKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TBuscarTallerKeyReleased
+        cargarDatos();
+    }//GEN-LAST:event_TBuscarTallerKeyReleased
+
+    private void BTodosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BTodosActionPerformed
+        String consulta = "CALL obtener_asignaciones('', 'Taller', 'ASC')";
+        cnx.entablar(consulta, TAsignaciones);
+    }//GEN-LAST:event_BTodosActionPerformed
+
+    private void BAsignadosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BAsignadosActionPerformed
+        String consulta = "CALL contar_asignaciones_por_modalidad()";
+        cnx.entablar(consulta, TAsignaciones);
+    }//GEN-LAST:event_BAsignadosActionPerformed
+
+    private void CBDireccionItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_CBDireccionItemStateChanged
+        cargarDatos();
+    }//GEN-LAST:event_CBDireccionItemStateChanged
 
     private String objToString(Object o) {
         return o != null ? o.toString() : "";
@@ -480,27 +551,25 @@ public class FAsignaciones extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton BActualizar;
-    private javax.swing.JButton BAgregar;
+    private javax.swing.JButton BAsignados;
     private javax.swing.JButton BEliminar;
     private javax.swing.JButton BGrafica;
-    private javax.swing.JButton BNuevo;
     private javax.swing.JButton BPDF;
-    private javax.swing.JComboBox<String> CBAula;
-    private javax.swing.JComboBox<String> CBCurso;
-    private javax.swing.JComboBox<String> CBInstructor;
-    private javax.swing.JComboBox<String> CBModalidad;
+    private javax.swing.JButton BTodos;
+    private javax.swing.JComboBox<String> CBDireccion;
+    private javax.swing.JComboBox<String> CBOrdenAsignaciones;
+    private javax.swing.JComboBox<String> CBOrdenTalleres;
     private javax.swing.JPanel PFondo;
-    private javax.swing.JTable TConsultas;
-    private javax.swing.JTextField THorario;
+    private javax.swing.JTable TAsignaciones;
+    private javax.swing.JTextField TBuscarAsig;
+    private javax.swing.JTextField TBuscarTaller;
+    private javax.swing.JTable TTalleres;
     private javax.swing.JToolBar Toolbar;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel12;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
 }

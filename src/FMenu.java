@@ -15,7 +15,7 @@ public class FMenu extends javax.swing.JFrame {
      * Creates new form FMenu
      */
     
-    String url = "http://127.0.0.1:9000/mysql.php";
+    String url = "https://floralwhite-crane-809801.hostingersite.com//mysql.php";
     ConexionHR cnx = new ConexionHR(url);
     
     public FMenu() {
@@ -43,23 +43,20 @@ public class FMenu extends javax.swing.JFrame {
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
-        BIstructores.setBackground(new java.awt.Color(0, 102, 255));
+        BIstructores.setBackground(new java.awt.Color(0, 229, 255));
         BIstructores.setFont(new java.awt.Font("Inter", 1, 14)); // NOI18N
-        BIstructores.setForeground(new java.awt.Color(255, 255, 255));
         BIstructores.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/instructor-icono.png"))); // NOI18N
         BIstructores.setText("INSTRUCTORES");
         BIstructores.addActionListener(this::BIstructoresActionPerformed);
 
-        BTalleres.setBackground(new java.awt.Color(0, 102, 255));
+        BTalleres.setBackground(new java.awt.Color(255, 82, 82));
         BTalleres.setFont(new java.awt.Font("Inter", 1, 14)); // NOI18N
-        BTalleres.setForeground(new java.awt.Color(255, 255, 255));
         BTalleres.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/cursos-icono.png"))); // NOI18N
         BTalleres.setText("TALLERES");
         BTalleres.addActionListener(this::BTalleresActionPerformed);
 
-        BAsignacion.setBackground(new java.awt.Color(0, 102, 255));
+        BAsignacion.setBackground(new java.awt.Color(255, 214, 0));
         BAsignacion.setFont(new java.awt.Font("Inter", 1, 14)); // NOI18N
-        BAsignacion.setForeground(new java.awt.Color(255, 255, 255));
         BAsignacion.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/asignar-icono-1.png"))); // NOI18N
         BAsignacion.setText("ASIGNACIÓN");
         BAsignacion.addActionListener(this::BAsignacionActionPerformed);

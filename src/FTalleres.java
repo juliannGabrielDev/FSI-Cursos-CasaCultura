@@ -2,6 +2,8 @@
 import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -14,7 +16,7 @@ import javax.swing.WindowConstants;
 public class FTalleres extends javax.swing.JFrame {
 
     ConexionHR cnx;
-    String tabla = "cursos";
+    String tabla = "talleres";
 
     public FTalleres(ConexionHR cnx) {
         initComponents();
@@ -26,14 +28,28 @@ public class FTalleres extends javax.swing.JFrame {
 
         cargarDatos();
         generarGrafica();
+
+        DefaultTableModel model = (DefaultTableModel) TConsultas.getModel();
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        TConsultas.setRowSorter(sorter);
+
     }
 
     private void cargarDatos() {
-        String talleres = "SELECT * FROM cursos ORDER BY nombre_curso";
-        int resultado = cnx.entablar(talleres, TConsultas);
+        String busqueda = TBuscar.getText().trim();
 
-        if (resultado == 0) {
-            JOptionPane.showMessageDialog(this, "No se pudieron cargar los datos o la tabla está vacía.");
+        String orden = "nombre_taller"; // Valor por defecto
+        if (CBOrden.getSelectedItem() != null) {
+            orden = CBOrden.getSelectedItem().toString();
+        }
+
+        // Estructura: CALL obtener_talleres(busqueda, campo_orden, direccion)
+        String consulta = "CALL obtener_talleres('" + busqueda + "', '" + orden + "', 'ASC')";
+
+        int resultado = cnx.entablar(consulta, TConsultas);
+
+        if (resultado == 0 && busqueda.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No se pudieron cargar los datos.");
         }
     }
 
@@ -48,7 +64,8 @@ public class FTalleres extends javax.swing.JFrame {
     }
 
     private void generarGrafica() {
-        String consulta = "SELECT nombre_curso, costo_semestral FROM cursos ORDER BY costo_semestral DESC";
+        // String consulta = "CALL obtener_talleres_por_costo()";
+        String consulta = "SELECT nivel, COUNT(id_taller) FROM talleres GROUP BY nivel";
 
         ArrayList<String> series = new ArrayList<>();
         series.add("Costo Semestral");
@@ -60,7 +77,7 @@ public class FTalleres extends javax.swing.JFrame {
             return;
         }
 
-        GraficaXY grafica = new GraficaXY("Comparativa de Costos por Taller", "Taller", "Costo ($)", series, datos);
+        GraficaXY grafica = new GraficaXY("Distribución de Talleres por Nivel", "Taller", "Costo ($)", series, datos);
 
         PFondo.removeAll();
         PFondo.add(grafica.chartPanel);
@@ -102,6 +119,14 @@ public class FTalleres extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         TDescripcion = new javax.swing.JTextArea();
         PFondo = new javax.swing.JPanel();
+        jToolBar1 = new javax.swing.JToolBar();
+        jLabel8 = new javax.swing.JLabel();
+        CBOrden = new javax.swing.JComboBox<>();
+        jLabel9 = new javax.swing.JLabel();
+        TBuscar = new javax.swing.JTextField();
+        jToolBar2 = new javax.swing.JToolBar();
+        BTodos = new javax.swing.JButton();
+        BCostos = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -128,11 +153,18 @@ public class FTalleres extends javax.swing.JFrame {
                 TConsultasMousePressed(evt);
             }
         });
+        TConsultas.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                TConsultasKeyReleased(evt);
+            }
+        });
         jScrollPane1.setViewportView(TConsultas);
 
-        Toolbar.setBackground(new java.awt.Color(0, 102, 255));
+        Toolbar.setBackground(new java.awt.Color(255, 82, 82));
         Toolbar.setRollover(true);
 
+        BNuevo.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BNuevo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/limpiar.png"))); // NOI18N
         BNuevo.setText("NUEVO");
         BNuevo.setFocusable(false);
         BNuevo.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -141,6 +173,8 @@ public class FTalleres extends javax.swing.JFrame {
         BNuevo.addActionListener(this::BNuevoActionPerformed);
         Toolbar.add(BNuevo);
 
+        BAgregar.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BAgregar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/agregar-archivo.png"))); // NOI18N
         BAgregar.setText("AGREGAR");
         BAgregar.setFocusable(false);
         BAgregar.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -149,6 +183,8 @@ public class FTalleres extends javax.swing.JFrame {
         BAgregar.addActionListener(this::BAgregarActionPerformed);
         Toolbar.add(BAgregar);
 
+        BActualizar.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BActualizar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/actualizar.png"))); // NOI18N
         BActualizar.setText("ACTUALIZAR");
         BActualizar.setFocusable(false);
         BActualizar.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -157,6 +193,8 @@ public class FTalleres extends javax.swing.JFrame {
         BActualizar.addActionListener(this::BActualizarActionPerformed);
         Toolbar.add(BActualizar);
 
+        BEliminar.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BEliminar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/eliminar.png"))); // NOI18N
         BEliminar.setText("ELIMINAR");
         BEliminar.setFocusable(false);
         BEliminar.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -165,6 +203,8 @@ public class FTalleres extends javax.swing.JFrame {
         BEliminar.addActionListener(this::BEliminarActionPerformed);
         Toolbar.add(BEliminar);
 
+        BPDF.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BPDF.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/pdf.png"))); // NOI18N
         BPDF.setText("PDF");
         BPDF.setFocusable(false);
         BPDF.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -173,6 +213,8 @@ public class FTalleres extends javax.swing.JFrame {
         BPDF.addActionListener(this::BPDFActionPerformed);
         Toolbar.add(BPDF);
 
+        BGrafica.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BGrafica.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/barra-grafica.png"))); // NOI18N
         BGrafica.setText("GRÁFICA");
         BGrafica.setFocusable(false);
         BGrafica.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -224,7 +266,7 @@ public class FTalleres extends javax.swing.JFrame {
                         .addComponent(jLabel7)
                         .addComponent(DCFechaInicio, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(DCFechaFin, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(8, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -253,10 +295,58 @@ public class FTalleres extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(CBNivel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(21, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         PFondo.setLayout(new java.awt.GridLayout(1, 1));
+
+        jToolBar1.setBackground(new java.awt.Color(255, 255, 255));
+        jToolBar1.setRollover(true);
+
+        jLabel8.setText("ORDEN:");
+        jToolBar1.add(jLabel8);
+
+        CBOrden.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "nombre_taller", "id_taller", "costo_semestral", "nivel", "fecha_inicio", "fecha_fin" }));
+        CBOrden.addItemListener(this::CBOrdenItemStateChanged);
+        jToolBar1.add(CBOrden);
+
+        jLabel9.setText("BUSCAR:");
+        jToolBar1.add(jLabel9);
+
+        TBuscar.setMaximumSize(new java.awt.Dimension(160, 35));
+        TBuscar.setMinimumSize(new java.awt.Dimension(160, 35));
+        TBuscar.setPreferredSize(new java.awt.Dimension(160, 35));
+        TBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                TBuscarKeyTyped(evt);
+            }
+        });
+        jToolBar1.add(TBuscar);
+
+        jToolBar2.setBackground(new java.awt.Color(255, 255, 255));
+        jToolBar2.setRollover(true);
+
+        BTodos.setBackground(new java.awt.Color(255, 82, 82));
+        BTodos.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BTodos.setForeground(new java.awt.Color(255, 255, 255));
+        BTodos.setText("TODOS");
+        BTodos.setFocusable(false);
+        BTodos.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        BTodos.setOpaque(true);
+        BTodos.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        BTodos.addActionListener(this::BTodosActionPerformed);
+        jToolBar2.add(BTodos);
+
+        BCostos.setBackground(new java.awt.Color(255, 82, 82));
+        BCostos.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        BCostos.setForeground(new java.awt.Color(255, 255, 255));
+        BCostos.setText("POR NIVEL");
+        BCostos.setFocusable(false);
+        BCostos.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        BCostos.setOpaque(true);
+        BCostos.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        BCostos.addActionListener(this::BCostosActionPerformed);
+        jToolBar2.add(BCostos);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -266,9 +356,14 @@ public class FTalleres extends javax.swing.JFrame {
             .addComponent(Toolbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(jScrollPane1)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 588, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(PFondo, javax.swing.GroupLayout.DEFAULT_SIZE, 476, Short.MAX_VALUE)
                 .addContainerGap())
@@ -278,11 +373,15 @@ public class FTalleres extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(Toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(Toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, 48, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(PFondo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -422,24 +521,64 @@ public class FTalleres extends javax.swing.JFrame {
     }//GEN-LAST:event_BEliminarActionPerformed
 
     private void BPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BPDFActionPerformed
-        String query = "SELECT nombre_curso AS Taller, nivel AS Nivel, "
-                + "CONCAT('$', costo_semestral) AS Costo, "
-                + "fecha_inicio AS Inicio FROM cursos ORDER BY nivel, nombre_curso";
+        // String query = "CALL obtener_talleres_detalle()";
 
-        float[] anchos = new float[]{4f, 2f, 2f, 2f};
+        int fila = TConsultas.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Selecciona un taller de la tabla para generar su ficha técnica.");
+            return;
+        }
 
-        int estado = cnx.crearPDF("Casa de la Cultura", "Catálogo de Talleres Disponibles", query, anchos, "ReporteTalleres");
+        // 2. Obtener datos clave de la fila seleccionada
+        String idTaller = TConsultas.getValueAt(fila, 0).toString();
+        String nombreTaller = TConsultas.getValueAt(fila, 1).toString();
+
+        // Mostramos detalles del taller y quiénes (instructores) lo imparten actualmente
+        String query = "SELECT t.nombre_taller AS Taller, t.nivel AS Nivel, "
+                + "CONCAT('$', t.costo_semestral) AS Costo, "
+                + "i.nombre_completo AS Instructor_Asignado "
+                + "FROM talleres t "
+                + "LEFT JOIN asignaciones a ON t.id_taller = a.id_taller "
+                + "LEFT JOIN instructores i ON a.id_instructor = i.id_instructor "
+                + "WHERE t.id_taller = " + idTaller;
+
+        float[] anchos = new float[]{3f, 2f, 2f, 4f};
+
+        String tituloPDF = "Ficha Técnica: " + nombreTaller;
+        int estado = cnx.crearPDF("Casa de la Cultura", tituloPDF, query, anchos, "Ficha_Taller_" + idTaller);
 
         if (estado == 1) {
-            cnx.visualizarPDF("ReporteTalleres");
+            cnx.visualizarPDF("Ficha_Taller_" + idTaller);
         } else {
-            JOptionPane.showMessageDialog(this, "Error al generar PDF.");
+            JOptionPane.showMessageDialog(this, "Error al generar el PDF.");
         }
     }//GEN-LAST:event_BPDFActionPerformed
 
     private void BGraficaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BGraficaActionPerformed
         generarGrafica();
     }//GEN-LAST:event_BGraficaActionPerformed
+
+    private void CBOrdenItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_CBOrdenItemStateChanged
+        cargarDatos();
+    }//GEN-LAST:event_CBOrdenItemStateChanged
+
+    private void TBuscarKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TBuscarKeyTyped
+        cargarDatos();
+    }//GEN-LAST:event_TBuscarKeyTyped
+
+    private void BTodosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BTodosActionPerformed
+        String consultas = "CALL obtener_talleres('', 'nombre_taller', 'ASC')";
+        cnx.entablar(consultas, TConsultas);
+    }//GEN-LAST:event_BTodosActionPerformed
+
+    private void BCostosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BCostosActionPerformed
+        String consulta = "SELECT nivel, COUNT(id_taller) FROM talleres GROUP BY nivel";
+        cnx.entablar(consulta, TConsultas);
+    }//GEN-LAST:event_BCostosActionPerformed
+
+    private void TConsultasKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TConsultasKeyReleased
+        cargarDatos();
+    }//GEN-LAST:event_TConsultasKeyReleased
 
     private String objToString(Object o) {
         return o != null ? o.toString() : "";
@@ -471,15 +610,19 @@ public class FTalleres extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton BActualizar;
     private javax.swing.JButton BAgregar;
+    private javax.swing.JButton BCostos;
     private javax.swing.JButton BEliminar;
     private javax.swing.JButton BGrafica;
     private javax.swing.JButton BNuevo;
     private javax.swing.JButton BPDF;
+    private javax.swing.JButton BTodos;
     private javax.swing.JComboBox<String> CBNivel;
+    private javax.swing.JComboBox<String> CBOrden;
     private com.toedter.calendar.JDateChooser DCFechaFin;
     private com.toedter.calendar.JDateChooser DCFechaInicio;
     private javax.swing.JPanel PFondo;
     private javax.swing.JSpinner SCosto;
+    private javax.swing.JTextField TBuscar;
     private javax.swing.JTable TConsultas;
     private javax.swing.JTextArea TDescripcion;
     private javax.swing.JTextField TNombre;
@@ -491,9 +634,13 @@ public class FTalleres extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JToolBar jToolBar2;
     // End of variables declaration//GEN-END:variables
 }
