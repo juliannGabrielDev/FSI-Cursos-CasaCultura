@@ -205,7 +205,7 @@ public class DAsignar extends javax.swing.JDialog {
                 .addContainerGap(17, Short.MAX_VALUE))
         );
 
-        Toolbar.setBackground(new java.awt.Color(0, 102, 255));
+        Toolbar.setBackground(new java.awt.Color(255, 214, 0));
         Toolbar.setRollover(true);
 
         BNuevo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/limpiar.png"))); // NOI18N

@@ -118,6 +118,8 @@ public class FAsignaciones extends javax.swing.JFrame {
         Toolbar = new javax.swing.JToolBar();
         BActualizar = new javax.swing.JButton();
         BEliminar = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
+        DCFechaAsignaciones = new com.toedter.calendar.JDateChooser();
         BPDF = new javax.swing.JButton();
         BGrafica = new javax.swing.JButton();
         PFondo = new javax.swing.JPanel();
@@ -180,6 +182,10 @@ public class FAsignaciones extends javax.swing.JFrame {
         BEliminar.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         BEliminar.addActionListener(this::BEliminarActionPerformed);
         Toolbar.add(BEliminar);
+
+        jLabel4.setText("REPORTE DEL DÍA:");
+        Toolbar.add(jLabel4);
+        Toolbar.add(DCFechaAsignaciones);
 
         BPDF.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/pdf.png"))); // NOI18N
         BPDF.setText("PDF");
@@ -315,11 +321,12 @@ public class FAsignaciones extends javax.swing.JFrame {
                             .addComponent(BTodos, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(BAsignados, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(CBOrdenAsignaciones, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(TBuscarAsig, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel2)
-                            .addComponent(CBDireccion, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(CBDireccion, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(CBOrdenAsignaciones, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(TBuscarAsig, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel2)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(PFondo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -440,32 +447,30 @@ public class FAsignaciones extends javax.swing.JFrame {
     }//GEN-LAST:event_BEliminarActionPerformed
 
     private void BPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BPDFActionPerformed
-        // String consulta = "CALL obtener_instructores_con_talleres()";
+        // Verificar si hay una fecha seleccionada en el JDateChooser
+        if (DCFechaAsignaciones.getDate() != null) {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            String fechaStr = sdf.format(DCFechaAsignaciones.getDate());
 
-        int fila = TAsignaciones.getSelectedRow();
+            // Consulta para obtener asignaciones de la fecha seleccionada
+            String query = "SELECT Taller, Instructor, Horario, Aula, Modalidad "
+                    + "FROM vista_asignaciones_detalle "
+                    + "WHERE DATE(Horario) = '" + fechaStr + "'";
 
-        if (fila == -1) {
-            JOptionPane.showMessageDialog(this, "Selecciona una asignación de la tabla inferior para generar su comprobante.");
-            return;
-        }
+            float[] anchos = {3f, 3f, 2f, 1.5f, 1.5f};
+            String titulo = "Reporte de Asignaciones - " + fechaStr;
+            String nombreArchivo = "Reporte_Asig_" + fechaStr;
 
-        String idAsignacion = TAsignaciones.getValueAt(fila, 0).toString();
+            // Generar PDF
+            int estado = cnx.crearPDF("Casa de la Cultura", titulo, query, anchos, nombreArchivo);
 
-        String query = "SELECT Taller, Instructor, Horario, Aula, Modalidad "
-                + "FROM vista_asignaciones_detalle "
-                + "WHERE id_asignacion = " + idAsignacion;
-
-        float[] anchos = {3f, 3f, 2f, 1.5f, 1.5f};
-        String titulo = "Comprobante de Asignación #" + idAsignacion;
-        String nombreArchivo = "Comprobante_Asig_" + idAsignacion;
-
-        // 4. Generar
-        int estado = cnx.crearPDF("Casa de la Cultura", titulo, query, anchos, nombreArchivo);
-
-        if (estado == 1) {
-            cnx.visualizarPDF(nombreArchivo);
+            if (estado == 1) {
+                cnx.visualizarPDF(nombreArchivo);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al generar el reporte por fecha.");
+            }
         } else {
-            JOptionPane.showMessageDialog(this, "Error al generar el comprobante.");
+            JOptionPane.showMessageDialog(this, "Por favor, selecciona una fecha para generar el reporte.");
         }
     }//GEN-LAST:event_BPDFActionPerformed
 
@@ -559,6 +564,7 @@ public class FAsignaciones extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> CBDireccion;
     private javax.swing.JComboBox<String> CBOrdenAsignaciones;
     private javax.swing.JComboBox<String> CBOrdenTalleres;
+    private com.toedter.calendar.JDateChooser DCFechaAsignaciones;
     private javax.swing.JPanel PFondo;
     private javax.swing.JTable TAsignaciones;
     private javax.swing.JTextField TBuscarAsig;
@@ -568,6 +574,7 @@ public class FAsignaciones extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

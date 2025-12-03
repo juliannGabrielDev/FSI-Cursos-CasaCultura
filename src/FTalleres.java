@@ -102,6 +102,8 @@ public class FTalleres extends javax.swing.JFrame {
         BAgregar = new javax.swing.JButton();
         BActualizar = new javax.swing.JButton();
         BEliminar = new javax.swing.JButton();
+        jLabel10 = new javax.swing.JLabel();
+        SReporteCosto = new javax.swing.JSpinner();
         BPDF = new javax.swing.JButton();
         BGrafica = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
@@ -202,6 +204,17 @@ public class FTalleres extends javax.swing.JFrame {
         BEliminar.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         BEliminar.addActionListener(this::BEliminarActionPerformed);
         Toolbar.add(BEliminar);
+
+        jLabel10.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
+        jLabel10.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel10.setText("TALLERES CON COSTO MAYOR A:");
+        Toolbar.add(jLabel10);
+
+        SReporteCosto.setModel(new javax.swing.SpinnerNumberModel(0, null, null, 100));
+        SReporteCosto.setMaximumSize(new java.awt.Dimension(150, 25));
+        SReporteCosto.setMinimumSize(new java.awt.Dimension(150, 25));
+        SReporteCosto.setPreferredSize(new java.awt.Dimension(150, 25));
+        Toolbar.add(SReporteCosto);
 
         BPDF.setFont(new java.awt.Font("Adwaita Sans", 1, 15)); // NOI18N
         BPDF.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/pdf.png"))); // NOI18N
@@ -521,36 +534,37 @@ public class FTalleres extends javax.swing.JFrame {
     }//GEN-LAST:event_BEliminarActionPerformed
 
     private void BPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BPDFActionPerformed
-        // String query = "CALL obtener_talleres_detalle()";
-
-        int fila = TConsultas.getSelectedRow();
-        if (fila == -1) {
-            JOptionPane.showMessageDialog(this, "Selecciona un taller de la tabla para generar su ficha técnica.");
-            return;
+        // 1. Verificar si se estableció un costo filtro en el Spinner
+        double costoLimite = 0;
+        try {
+            Object val = SReporteCosto.getValue();
+            if (val instanceof Number) {
+                costoLimite = ((Number) val).doubleValue();
+            }
+        } catch (Exception e) {
+            costoLimite = 0;
         }
 
-        // 2. Obtener datos clave de la fila seleccionada
-        String idTaller = TConsultas.getValueAt(fila, 0).toString();
-        String nombreTaller = TConsultas.getValueAt(fila, 1).toString();
+        if (costoLimite > 0) {
+            String query = "SELECT nombre_taller AS Taller, nivel AS Nivel, "
+                    + "costo_semestral AS Costo, fecha_inicio AS Inicio, fecha_fin AS Fin "
+                    + "FROM talleres "
+                    + "WHERE costo_semestral > " + costoLimite + " " // Changed from < to >
+                    + "ORDER BY costo_semestral ASC";
 
-        // Mostramos detalles del taller y quiénes (instructores) lo imparten actualmente
-        String query = "SELECT t.nombre_taller AS Taller, t.nivel AS Nivel, "
-                + "CONCAT('$', t.costo_semestral) AS Costo, "
-                + "i.nombre_completo AS Instructor_Asignado "
-                + "FROM talleres t "
-                + "LEFT JOIN asignaciones a ON t.id_taller = a.id_taller "
-                + "LEFT JOIN instructores i ON a.id_instructor = i.id_instructor "
-                + "WHERE t.id_taller = " + idTaller;
+            float[] anchos = {3f, 2f, 1.5f, 2f, 2f};
+            String titulo = "Talleres con Costo Mayor a $" + costoLimite; // Changed title
+            String nombreArchivo = "Reporte_Talleres_Mayor_" + costoLimite; // Changed filename
 
-        float[] anchos = new float[]{3f, 2f, 2f, 4f};
+            int estado = cnx.crearPDF("Casa de la Cultura", titulo, query, anchos, nombreArchivo);
 
-        String tituloPDF = "Ficha Técnica: " + nombreTaller;
-        int estado = cnx.crearPDF("Casa de la Cultura", tituloPDF, query, anchos, "Ficha_Taller_" + idTaller);
-
-        if (estado == 1) {
-            cnx.visualizarPDF("Ficha_Taller_" + idTaller);
+            if (estado == 1) {
+                cnx.visualizarPDF(nombreArchivo);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al generar el reporte de costos.");
+            }
         } else {
-            JOptionPane.showMessageDialog(this, "Error al generar el PDF.");
+            JOptionPane.showMessageDialog(this, "Por favor, ingresa un costo mayor a 0 en el campo superior para generar el reporte.");
         }
     }//GEN-LAST:event_BPDFActionPerformed
 
@@ -622,12 +636,14 @@ public class FTalleres extends javax.swing.JFrame {
     private com.toedter.calendar.JDateChooser DCFechaInicio;
     private javax.swing.JPanel PFondo;
     private javax.swing.JSpinner SCosto;
+    private javax.swing.JSpinner SReporteCosto;
     private javax.swing.JTextField TBuscar;
     private javax.swing.JTable TConsultas;
     private javax.swing.JTextArea TDescripcion;
     private javax.swing.JTextField TNombre;
     private javax.swing.JToolBar Toolbar;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

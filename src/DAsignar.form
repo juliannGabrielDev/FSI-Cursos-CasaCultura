@@ -243,7 +243,7 @@
         <Container class="javax.swing.JToolBar" name="Toolbar">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="ff" green="66" red="0" type="rgb"/>
+              <Color blue="0" green="d6" red="ff" type="rgb"/>
             </Property>
             <Property name="rollover" type="boolean" value="true"/>
           </Properties>
